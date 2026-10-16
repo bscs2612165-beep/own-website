@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My Student Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #4f8ef7;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent4: #fb923c;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --warn: #f59e0b;
+    --red: #f87171;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; min-height: 100%; }
+ 
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 220px; background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 24px 16px; gap: 6px;
+    position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto;
+  }
+  .logo { font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 20px; padding-left: 8px; letter-spacing: -0.5px; }
+  .logo span { color: var(--text); font-weight: 300; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px;
+    font-size: 13.5px; font-weight: 500; color: var(--muted); cursor: pointer;
+    transition: background 0.15s, color 0.15s; border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(79,142,247,0.12); color: var(--accent); }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .main { margin-left: 220px; padding: 32px 36px; flex: 1; max-width: calc(100vw - 220px); }
+ 
+  /* Header */
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+  .day-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .page-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .time-pill {
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent);
+    background: rgba(79,142,247,0.08); border: 1px solid rgba(79,142,247,0.2);
+    padding: 8px 16px; border-radius: 20px;
+  }
+ 
+  /* Today's Plan Card */
+  .today-card {
+    background: linear-gradient(135deg, rgba(79,142,247,0.08) 0%, rgba(167,139,250,0.06) 100%);
+    border: 1px solid var(--border); border-radius: 16px; padding: 24px 28px; margin-bottom: 28px;
+  }
+  .today-label { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent); letter-spacing: 1px; margin-bottom: 12px; }
+  .today-title { font-size: 20px; font-weight: 600; margin-bottom: 18px; }
+  .timeline { display: flex; flex-direction: column; gap: 10px; }
+  .timeline-item { display: flex; align-items: flex-start; gap: 14px; }
+  .tl-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); min-width: 72px; padding-top: 3px; }
+  .tl-dot-wrap { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .tl-line { width: 1px; background: var(--border); flex: 1; min-height: 14px; margin-top: 2px; }
+  .tl-content { flex: 1; padding-bottom: 8px; }
+  .tl-label { font-size: 13.5px; font-weight: 500; margin-bottom: 2px; }
+  .tl-sub { font-size: 12px; color: var(--muted); }
+  .dot-uni { background: var(--accent); box-shadow: 0 0 6px rgba(79,142,247,0.5); }
+  .dot-learn { background: var(--accent3); box-shadow: 0 0 6px rgba(52,211,153,0.5); }
+  .dot-free { background: var(--muted); }
+  .dot-sleep { background: var(--accent2); }
+ 
+  /* Grid */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; }
+  .card-title { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--muted); letter-spacing: 0.8px; margin-bottom: 14px; }
+ 
+  /* Skills */
+  .skill-list { display: flex; flex-direction: column; gap: 12px; }
+  .skill-item {}
+  .skill-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .skill-name { font-size: 13.5px; font-weight: 500; }
+  .skill-pct { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+  .skill-bar { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .skill-fill { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
+ 
+  /* Tasks */
+  .task-list { display: flex; flex-direction: column; gap: 8px; }
+  .task-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    background: var(--surface2); border-radius: 8px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .task-item:hover { background: #1f2f47; }
+  .task-check {
+    width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; transition: all 0.15s;
+  }
+  .task-check.done { background: var(--accent3); border-color: var(--accent3); color: #000; }
+  .task-text { font-size: 13px; flex: 1; }
+  .task-text.done { text-decoration: line-through; color: var(--muted); }
+  .task-badge { font-size: 10px; font-family: 'JetBrains Mono', monospace; padding: 2px 7px; border-radius: 99px; }
+  .badge-uni { background: rgba(79,142,247,0.15); color: var(--accent); }
+  .badge-learn { background: rgba(52,211,153,0.15); color: var(--accent3); }
+  .badge-quiz { background: rgba(251,146,60,0.15); color: var(--accent4); }
+ 
+  /* Suggestion box */
+  .suggestion-box {
+    background: linear-gradient(135deg, rgba(52,211,153,0.06), rgba(167,139,250,0.06));
+    border: 1px solid rgba(52,211,153,0.2); border-radius: 14px; padding: 20px 22px; margin-bottom: 20px;
+  }
+  .suggestion-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .suggestion-icon { font-size: 20px; }
+  .suggestion-title { font-size: 15px; font-weight: 600; }
+  .suggestion-list { display: flex; flex-direction: column; gap: 8px; }
+  .suggestion-item { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: var(--text); }
+  .s-bullet { color: var(--accent3); font-weight: 700; flex-shrink: 0; }
+ 
+  /* Week view */
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .week-day { background: var(--surface2); border-radius: 10px; padding: 12px 8px; text-align: center; }
+  .week-day.today { background: rgba(79,142,247,0.12); border: 1px solid rgba(79,142,247,0.3); }
+  .week-day.off { background: rgba(52,211,153,0.05); border: 1px solid rgba(52,211,153,0.1); }
+  .wd-name { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.5px; }
+  .wd-type { font-size: 11px; font-weight: 600; }
+  .wd-classes { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+  .wd-class { font-size: 9.5px; color: var(--muted); background: var(--border); border-radius: 4px; padding: 2px 5px; }
+ 
+  /* Add task input */
+  .add-task { display: flex; gap: 8px; margin-top: 12px; }
+  .add-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 12px; color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 13px;
+    outline: none;
+  }
+  .add-input:focus { border-color: var(--accent); }
+  .task-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .add-btn, .ghost-btn {
+    border: none; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .add-btn { background: var(--accent); color: #fff; }
+  .add-btn:hover { background: #3b7ef0; }
+  .ghost-btn { background: rgba(148, 163, 184, 0.08); color: var(--text); border: 1px solid var(--border); }
+  .ghost-btn:hover { opacity: 0.96; transform: translateY(-1px); }
+ 
+  /* Pages */
+  .page { display: none; }
+  .page.active { display: block; }
+ 
+  /* Stats row */
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .stat-val { font-size: 26px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+  .stat-label { font-size: 11.5px; color: var(--muted); }
+ 
+  /* Course cards */
+  .course-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+  .course-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .course-code { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); margin-bottom: 6px; }
+  .course-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .course-teacher { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .course-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .course-tag { font-size: 10px; padding: 3px 8px; border-radius: 99px; font-family: 'JetBrains Mono', monospace; }
+ 
+  /* Tips page */
+  .tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .tip-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .tip-icon { font-size: 28px; margin-bottom: 10px; }
+  .tip-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  .tip-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .tip-resources { margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+  .tip-link { font-size: 12px; color: var(--accent); text-decoration: none; }
+  .tip-link:hover { text-decoration: underline; }
+ 
+  /* Mobile */
+  @media (max-width: 768px) {
+    .sidebar { width: 100%; height: auto; position: relative; flex-direction: row; flex-wrap: wrap; padding: 12px; }
+    .main { margin-left: 0; padding: 16px; max-width: 100%; }
+    .app { flex-direction: column; }
+    .logo { display: none; }
+    .nav-item { padding: 7px 10px; font-size: 12px; }
+    .grid2, .grid3, .stats-row, .course-grid, .tips-grid { grid-template-columns: 1fr; }
+    .week-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">SZABIST <span>/ CS</span></div>
+    <button class="nav-item active" onclick="showPage('today')">
+      <span class="nav-icon">⚡</span> Today's Plan
+    </button>
+    <button class="nav-item" onclick="showPage('tasks')">
+      <span class="nav-icon">✅</span> Tasks & Assignments
+    </button>
+    <button class="nav-item" onclick="showPage('timetable')">
+      <span class="nav-icon">📅</span> Timetable
+    </button>
+    <button class="nav-item" onclick="showPage('skills')">
+      <span class="nav-icon">🚀</span> Skills & Learning
+    </button>
+    <button class="nav-item" onclick="showPage('tips')">
+      <span class="nav-icon">💡</span> What to Learn
+    </button>
+  </aside>
+ 
+  <main class="main">
+ 
+    <!-- TODAY'S PLAN -->
+    <div id="page-today" class="page active">
+      <div class="header">
+        <div>
+          <div class="day-tag" id="today-date">Loading...</div>
+          <div class="page-title" id="today-greeting">Good morning 👋</div>
+        </div>
+        <div class="time-pill" id="live-time">00:00</div>
+      </div>
+ 
+      <!-- Today card -->
+      <div class="today-card">
+        <div class="today-label">TODAY'S SCHEDULE</div>
+        <div class="today-title" id="day-headline">Loading your day...</div>
+        <div class="timeline" id="timeline-content"></div>
+      </div>
+ 
+      <!-- Suggestion -->
+      <div class="suggestion-box" id="suggestion-box">
+        <div class="suggestion-head">
+          <span class="suggestion-icon">🎯</span>
+          <span class="suggestion-title" id="suggestion-title">Today's Focus</span>
+        </div>
+        <div class="suggestion-list" id="suggestion-list"></div>
+      </div>
+ 
+      <!-- Quick stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--accent)" id="stat-tasks">0</div>
+          <div class="stat-label">Tasks Pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--accent3)">4</div>
+          <div class="stat-label">Skills Learning</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--accent4)" id="stat-free">–</div>
+          <div class="stat-label">Free Hours Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" style="color:var(--accent2)">1st</div>
+          <div class="stat-label">Semester — BSCS</div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- TASKS -->
+    <div id="page-tasks" class="page">
+      <div class="header">
+        <div>
+          <div class="day-tag">MANAGE YOUR WORK</div>
+          <div class="page-title">Tasks & Assignments</div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">UNI TASKS</div>
+          <div class="task-list" id="uni-tasks"></div>
+          <div class="add-task">
+            <input class="add-input" id="uni-input" placeholder="Add uni task..." />
+            <button class="add-btn" onclick="addTask('uni')">Add</button>
+          </div>
+          <div class="task-actions">
+            <button class="ghost-btn" onclick="clearCompletedTasks()">Clear completed</button>
+            <button class="ghost-btn" onclick="resetTasks()">Reset list</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">LEARNING TASKS</div>
+          <div class="task-list" id="learn-tasks"></div>
+          <div class="add-task">
+            <input class="add-input" id="learn-input" placeholder="Add learning task..." />
+            <button class="add-btn" onclick="addTask('learn')">Add</button>
+          </div>
+          <div class="task-actions">
+            <button class="ghost-btn" onclick="clearCompletedTasks()">Clear completed</button>
+            <button class="ghost-btn" onclick="resetTasks()">Reset list</button>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- TIMETABLE -->
+    <div id="page-timetable" class="page">
+      <div class="header">
+        <div>
+          <div class="day-tag">SZABIST — FALL 2026</div>
+          <div class="page-title">Your Timetable</div>
+        </div>
+      </div>
+ 
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">WEEKLY OVERVIEW</div>
+        <div class="week-grid">
+          <div class="week-day" id="wd-mon">
+            <div class="wd-name">MON</div>
+            <div class="wd-type" style="color:var(--accent)">UNI</div>
+            <div class="wd-classes">
+              <div class="wd-class">1:30–4:00</div>
+              <div class="wd-class">4:15–6:45</div>
+            </div>
+          </div>
+          <div class="week-day" id="wd-tue">
+            <div class="wd-name">TUE</div>
+            <div class="wd-type" style="color:var(--accent)">UNI</div>
+            <div class="wd-classes">
+              <div class="wd-class">8:00–10:30</div>
+              <div class="wd-class">10:45–1:15</div>
+            </div>
+          </div>
+          <div class="week-day off">
+            <div class="wd-name">WED</div>
+            <div class="wd-type" style="color:var(--accent)">UNI</div>
+            <div class="wd-classes">
+              <div class="wd-class">1:30–4:00</div>
+              <div class="wd-class">4:15–6:45</div>
+            </div>
+          </div>
+          <div class="week-day off">
+            <div class="wd-name">THU</div>
+            <div class="wd-type" style="color:var(--accent3)">FREE</div>
+          </div>
+          <div class="week-day off">
+            <div class="wd-name">FRI</div>
+            <div class="wd-type" style="color:var(--accent3)">FREE</div>
+          </div>
+          <div class="week-day" id="wd-sat">
+            <div class="wd-name">SAT</div>
+            <div class="wd-type" style="color:var(--accent)">UNI</div>
+            <div class="wd-classes">
+              <div class="wd-class">8:00–10:30</div>
+              <div class="wd-class">10:45–1:15</div>
+            </div>
+          </div>
+          <div class="week-day off">
+            <div class="wd-name">SUN</div>
+            <div class="wd-type" style="color:var(--accent3)">FREE</div>
+          </div>
+        </div>
+      </div>
+ 
+      <div class="course-grid">
+        <div class="course-card">
+          <div class="course-code">CSC 1103 / CSCL 1103</div>
+          <div class="course-name">Fundamentals of Programming</div>
+          <div class="course-teacher">Syed Muhammad Hassan (Qamber - Lab)</div>
+          <div class="course-meta">
+            <span class="course-tag" style="background:rgba(79,142,247,0.12);color:var(--accent)">Mon 1:30–4:00</span>
+            <span class="course-tag" style="background:rgba(79,142,247,0.12);color:var(--accent)">Tue 8:00–10:30 Lab</span>
+          </div>
+        </div>
+        <div class="course-card">
+          <div class="course-code">CSC 1101</div>
+          <div class="course-name">Calculus & Analytical Geometry</div>
+          <div class="course-teacher">Waqar Malik</div>
+          <div class="course-meta">
+            <span class="course-tag" style="background:rgba(167,139,250,0.12);color:var(--accent2)">Tue 10:45–1:15</span>
+          </div>
+        </div>
+        <div class="course-card">
+          <div class="course-code">CSC 1102</div>
+          <div class="course-name">English Composition & Comprehension</div>
+          <div class="course-teacher">Sabeen Amjad</div>
+          <div class="course-meta">
+            <span class="course-tag" style="background:rgba(79,142,247,0.12);color:var(--accent)">Mon 4:15–6:45</span>
+          </div>
+        </div>
+        <div class="course-card">
+          <div class="course-code">CSC 1108 / CSCL 1108</div>
+          <div class="course-name">Introduction to Computer Science</div>
+          <div class="course-teacher">Iqra (TBA - Lab)</div>
+          <div class="course-meta">
+            <span class="course-tag" style="background:rgba(52,211,153,0.12);color:var(--accent3)">Wed 1:30–4:00</span>
+            <span class="course-tag" style="background:rgba(52,211,153,0.12);color:var(--accent3)">Wed 4:15–6:45 Lab</span>
+          </div>
+        </div>
+        <div class="course-card">
+          <div class="course-code">CSC 1107 / CSCL 1107</div>
+          <div class="course-name">Applied Physics</div>
+          <div class="course-teacher">Dr Khurram Iqbal / Arsalan Ilyas (Lab)</div>
+          <div class="course-meta">
+            <span class="course-tag" style="background:rgba(251,146,60,0.12);color:var(--accent4)">Sat 8:00–10:30 Lab</span>
+            <span class="course-tag" style="background:rgba(251,146,60,0.12);color:var(--accent4)">Sat 10:45–1:15</span>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- SKILLS TRACKER -->
+    <div id="page-skills" class="page">
+      <div class="header">
+        <div>
+          <div class="day-tag">YOUR LEARNING JOURNEY</div>
+          <div class="page-title">Skills Tracker</div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">SKILL PROGRESS</div>
+          <div class="skill-list">
+            <div class="skill-item">
+              <div class="skill-head"><span class="skill-name">C Language</span><span class="skill-pct" id="pct-c">0%</span></div>
+              <div class="skill-bar"><div class="skill-fill" id="bar-c" style="width:0%;background:var(--accent)"></div></div>
+            </div>
+            <div class="skill-item">
+              <div class="skill-head"><span class="skill-name">SQL / Databases</span><span class="skill-pct" id="pct-sql">0%</span></div>
+              <div class="skill-bar"><div class="skill-fill" id="bar-sql" style="width:0%;background:var(--accent3)"></div></div>
+            </div>
+            <div class="skill-item">
+              <div class="skill-head"><span class="skill-name">AI Tools & Websites</span><span class="skill-pct" id="pct-ai">0%</span></div>
+              <div class="skill-bar"><div class="skill-fill" id="bar-ai" style="width:0%;background:var(--accent2)"></div></div>
+            </div>
+            <div class="skill-item">
+              <div class="skill-head"><span class="skill-name">Video Editing (CapCut)</span><span class="skill-pct" id="pct-cap">0%</span></div>
+              <div class="skill-bar"><div class="skill-fill" id="bar-cap" style="width:0%;background:var(--accent4)"></div></div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="add-btn" style="background:var(--accent)" onclick="updateSkill('c')">+5% C</button>
+            <button class="add-btn" style="background:var(--accent3)" onclick="updateSkill('sql')">+5% SQL</button>
+            <button class="add-btn" style="background:var(--accent2)" onclick="updateSkill('ai')">+5% AI</button>
+            <button class="add-btn" style="background:var(--accent4)" onclick="updateSkill('cap')">+5% CapCut</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">WEEKLY LEARNING PLAN</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="padding:12px;background:var(--surface2);border-radius:8px;">
+              <div style="font-size:12px;color:var(--accent);font-weight:600;margin-bottom:6px;">MON / WED (morning, before uni)</div>
+              <div style="font-size:13px;color:var(--muted);">C Language practice · AI tools exploration</div>
+            </div>
+            <div style="padding:12px;background:var(--surface2);border-radius:8px;">
+              <div style="font-size:12px;color:var(--accent3);font-weight:600;margin-bottom:6px;">THU / FRI / SUN (full free day)</div>
+              <div style="font-size:13px;color:var(--muted);">Deep SQL practice · CapCut projects · New AI tools · Uni revision</div>
+            </div>
+            <div style="padding:12px;background:var(--surface2);border-radius:8px;">
+              <div style="font-size:12px;color:var(--accent4);font-weight:600;margin-bottom:6px;">TUE / SAT (after uni, 1:15 PM+)</div>
+              <div style="font-size:13px;color:var(--muted);">Short 1-hr sessions · Review what you learned · Rest if tired</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- WHAT TO LEARN -->
+    <div id="page-tips" class="page">
+      <div class="header">
+        <div>
+          <div class="day-tag">ROADMAP & RESOURCES</div>
+          <div class="page-title">What to Learn & How</div>
+        </div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip-card">
+          <div class="tip-icon">💻</div>
+          <div class="tip-title">C Language — Start Here</div>
+          <div class="tip-body">Your Fundamentals of Programming course at uni uses programming concepts. C language will make it 10x easier. Learn variables, loops, functions, arrays — then try small programs daily.</div>
+          <div class="tip-resources">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px;margin-top:8px;">RESOURCES:</div>
+            <a class="tip-link" href="https://cs50.harvard.edu/x/" target="_blank">→ CS50 Harvard (free, best beginner course)</a>
+            <a class="tip-link" href="https://www.learn-c.org/" target="_blank">→ learn-c.org (interactive practice)</a>
+            <a class="tip-link" href="https://www.youtube.com/@CodeWithHarry" target="_blank">→ CodeWithHarry YouTube (Urdu/Hindi)</a>
+          </div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">🗄️</div>
+          <div class="tip-title">SQL — Complete Beginner Path</div>
+          <div class="tip-body">SQL lets you talk to databases. Start with SELECT, WHERE, JOIN. You'll use this in almost every CS job. It's very learnable — give it 2–3 weeks of daily practice and you'll be solid.</div>
+          <div class="tip-resources">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px;margin-top:8px;">RESOURCES:</div>
+            <a class="tip-link" href="https://sqlbolt.com/" target="_blank">→ SQLBolt (interactive, free)</a>
+            <a class="tip-link" href="https://www.w3schools.com/sql/" target="_blank">→ W3Schools SQL (quick reference)</a>
+            <a class="tip-link" href="https://www.youtube.com/watch?v=HXV3zeQKqGY" target="_blank">→ freeCodeCamp SQL Full Course (YouTube)</a>
+          </div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">🤖</div>
+          <div class="tip-title">AI Tools & Websites</div>
+          <div class="tip-body">Learn by using them. Try ChatGPT, Claude, Gemini for study help. Then explore Midjourney/DALL-E for images, Suno for music, ElevenLabs for voice. Understanding AI tools is a huge career skill in 2026.</div>
+          <div class="tip-resources">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px;margin-top:8px;">TOOLS TO TRY:</div>
+            <a class="tip-link" href="https://claude.ai" target="_blank">→ Claude.ai (AI assistant — you're using it!)</a>
+            <a class="tip-link" href="https://suno.com" target="_blank">→ Suno.com (AI music generation)</a>
+            <a class="tip-link" href="https://elevenlabs.io" target="_blank">→ ElevenLabs (AI voice generation)</a>
+            <a class="tip-link" href="https://huggingface.co/spaces" target="_blank">→ HuggingFace Spaces (explore AI demos)</a>
+          </div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">🎬</div>
+          <div class="tip-title">CapCut & Video Editing</div>
+          <div class="tip-body">CapCut is great for content creation. Learn cuts, transitions, subtitles, trending effects. This is a creative skill that can earn you money as a freelancer while you're still in uni.</div>
+          <div class="tip-resources">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px;margin-top:8px;">HOW TO LEARN:</div>
+            <a class="tip-link" href="https://www.youtube.com/results?search_query=capcut+tutorial+beginners+2026" target="_blank">→ CapCut Beginner Tutorials (YouTube)</a>
+            <a class="tip-link" href="https://www.capcut.com/" target="_blank">→ CapCut Web Version (practice online)</a>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px;">💡 Tip: Edit 1 short video per week. Post on Instagram Reels to track your progress.</div>
+          </div>
+        </div>
+        <div class="tip-card" style="grid-column: span 2">
+          <div class="tip-icon">📈</div>
+          <div class="tip-title">Suggested Learning Order (for you specifically)</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;">
+            <div style="background:var(--surface2);border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:20px;margin-bottom:6px;">1️⃣</div>
+              <div style="font-size:13px;font-weight:600;color:var(--accent)">C Language</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">Helps your uni FOP course directly</div>
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:20px;margin-bottom:6px;">2️⃣</div>
+              <div style="font-size:13px;font-weight:600;color:var(--accent3)">SQL</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">Essential CS skill, easy to learn</div>
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:20px;margin-bottom:6px;">3️⃣</div>
+              <div style="font-size:13px;font-weight:600;color:var(--accent2)">AI Tools</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">Use daily — no formal study needed</div>
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:12px;text-align:center;">
+              <div style="font-size:20px;margin-bottom:6px;">4️⃣</div>
+              <div style="font-size:13px;font-weight:600;color:var(--accent4)">CapCut</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">Weekend creative project</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+  </main>
+</div>
+ 
+<script>
+// ── Data ──────────────────────────────────────────────────────────
+const SCHEDULE = {
+  1: { // Monday
+    type: 'uni',
+    freeAM: true,
+    classes: [
+      { time: '1:30 PM', label: 'Fundamentals of Programming', sub: 'CSC 1103 · LAB-CS 100-B', color: 'dot-uni' },
+      { time: '4:15 PM', label: 'English Composition', sub: 'CSC 1102 · Room 402', color: 'dot-uni' }
+    ],
+    freeSlots: [
+      { time: 'Before 1:30 PM', label: 'Morning learning block 🔥', sub: 'C Language or AI tools practice', color: 'dot-learn' }
+    ],
+    freeHours: 5,
+    suggestion: {
+      title: 'Monday — Morning is yours, use it!',
+      items: [
+        'Practice C Language for 45–60 mins (loops, arrays)',
+        'Explore one new AI tool or website',
+        'Review your Fundamentals of Programming notes before class',
+        'After uni: rest or do a light CapCut tutorial'
+      ]
+    }
+  },
+  2: { // Tuesday
+    type: 'uni',
+    freeAM: false,
+    classes: [
+      { time: '8:00 AM', label: 'FOP Lab — CSCL 1103', sub: 'Qamber · LAB-CS 100-B', color: 'dot-uni' },
+      { time: '10:45 AM', label: 'Calculus & Analytical Geometry', sub: 'CSC 1101 · Room 402', color: 'dot-uni' }
+    ],
+    freeSlots: [
+      { time: 'After 1:15 PM', label: 'Afternoon free block', sub: 'Light learning or rest day', color: 'dot-learn' }
+    ],
+    freeHours: 3,
+    suggestion: {
+      title: 'Tuesday — Early uni, chill afternoon',
+      items: [
+        'Uni ends at 1:15 PM — rest and eat first',
+        'If energy is there: 30 mins SQL practice (SQLBolt)',
+        'Review your Calculus assignment or notes',
+        'No pressure — you start early today'
+      ]
+    }
+  },
+  3: { // Wednesday
+    type: 'uni',
+    freeAM: true,
+    classes: [
+      { time: '1:30 PM', label: 'Intro to Computer Science', sub: 'CSC 1108 · LAB-Smart Lab 2', color: 'dot-uni' },
+      { time: '4:15 PM', label: 'Intro to CS Lab', sub: 'CSCL 1108 · LAB-CS 100-B', color: 'dot-uni' }
+    ],
+    freeSlots: [
+      { time: 'Before 1:30 PM', label: 'Morning learning block 🔥', sub: 'SQL practice or C Language', color: 'dot-learn' }
+    ],
+    freeHours: 5,
+    suggestion: {
+      title: 'Wednesday — Another great morning window',
+      items: [
+        'Morning: SQL practice on SQLBolt (start with SELECT basics)',
+        'Or continue C Language from Monday',
+        'Prepare for your Intro to CS class',
+        'After uni: light CapCut video or just rest'
+      ]
+    }
+  },
+  4: { // Thursday
+    type: 'free',
+    classes: [],
+    freeSlots: [
+      { time: 'All day', label: 'Full free day 🎉', sub: 'No uni — learn, practice or chill', color: 'dot-learn' }
+    ],
+    freeHours: 12,
+    suggestion: {
+      title: 'Thursday — Full free day, go deep!',
+      items: [
+        'Morning (2 hrs): C Language — write small programs (calculator, grade checker)',
+        'Afternoon (1.5 hrs): SQL — practice JOINs or create your first database',
+        'Evening: Explore a new AI website or make a CapCut video',
+        'Also a great day to do uni assignments in advance'
+      ]
+    }
+  },
+  5: { // Friday
+    type: 'free',
+    classes: [],
+    freeSlots: [
+      { time: 'All day', label: 'Full free day 🎉', sub: 'Perfect for deep work or catching up', color: 'dot-learn' }
+    ],
+    freeHours: 12,
+    suggestion: {
+      title: 'Friday — Your power learning day',
+      items: [
+        'Morning: Catch up on any pending uni assignments or quizzes',
+        'Midday: 1 hour SQL or C practice (consistency is key)',
+        'Afternoon: Try building something small — a CapCut reel or a C program',
+        'Evening: Relax — watch something CS related on YouTube'
+      ]
+    }
+  },
+  6: { // Saturday
+    type: 'uni',
+    freeAM: false,
+    classes: [
+      { time: '8:00 AM', label: 'Applied Physics Lab', sub: 'CSCL 1107 · Physics Lab 153-Campus', color: 'dot-uni' },
+      { time: '10:45 AM', label: 'Applied Physics', sub: 'CSC 1107 · Room 409', color: 'dot-uni' }
+    ],
+    freeSlots: [
+      { time: 'After 1:15 PM', label: 'Weekend afternoon', sub: 'Relax or creative projects', color: 'dot-learn' }
+    ],
+    freeHours: 4,
+    suggestion: {
+      title: 'Saturday — Uni done by 1:15, enjoy the weekend',
+      items: [
+        'After uni: eat well and rest for at least an hour',
+        'Optional: 30 mins CapCut editing (creative, fun, low effort)',
+        'Review Physics notes if you have a quiz coming',
+        'Don\'t overdo it — Sunday is free too'
+      ]
+    }
+  },
+  0: { // Sunday
+    type: 'free',
+    classes: [],
+    freeSlots: [
+      { time: 'All day', label: 'Full free day 🎉', sub: 'Prepare for the week ahead', color: 'dot-learn' }
+    ],
+    freeHours: 10,
+    suggestion: {
+      title: 'Sunday — Prep + learning + recharge',
+      items: [
+        'Morning: Weekly review — what did you learn this week?',
+        'Check all uni deadlines coming this week',
+        '1 hr: Practice whichever skill feels weakest',
+        'Evening: Plan tomorrow\'s morning block (Mon you have morning free!)'
+      ]
+    }
+  }
+};
+ 
+const defaultTasks = {
+  uni: [
+    { text: 'Complete FOP assignment', done: false, badge: 'uni' },
+    { text: 'Study for Calculus quiz', done: false, badge: 'quiz' },
+    { text: 'Revise Intro to CS slides', done: false, badge: 'uni' },
+  ],
+  learn: [
+    { text: 'Complete SQLBolt lessons 1–5', done: false, badge: 'learn' },
+    { text: 'Write a C program: simple calculator', done: false, badge: 'learn' },
+    { text: 'Try one new AI tool this week', done: false, badge: 'learn' },
+  ]
+};
+ 
+// ── State ─────────────────────────────────────────────────────────
+let tasks = JSON.parse(localStorage.getItem('tasks') || JSON.stringify(defaultTasks));
+let skills = JSON.parse(localStorage.getItem('skills') || JSON.stringify({ c: 0, sql: 0, ai: 0, cap: 0 }));
+ 
+function saveTasks() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
+function saveSkills() { localStorage.setItem('skills', JSON.stringify(skills)); }
+function updateTaskCount() {
+  const pending = [...tasks.uni, ...tasks.learn].filter(t => !t.done).length;
+  const el = document.getElementById('stat-tasks');
+  if (el) el.textContent = pending;
+}
+ 
+// ── Pages ──────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const btns = document.querySelectorAll('.nav-item');
+  const map = { today: 0, tasks: 1, timetable: 2, skills: 3, tips: 4 };
+  btns[map[id]].classList.add('active');
+  if (id === 'tasks') renderTasks();
+  if (id === 'skills') renderSkills();
+}
+ 
+// ── Clock ──────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('live-time').textContent = h + ':' + m;
+  const hour = now.getHours();
+  let greeting = hour < 12 ? 'Good morning 👋' : hour < 17 ? 'Good afternoon 👋' : 'Good evening 👋';
+  document.getElementById('today-greeting').textContent = greeting;
+}
+ 
+// ── Today View ─────────────────────────────────────────────────────
+function loadToday() {
+  const now = new Date();
+  const dow = now.getDay(); // 0=Sun
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('today-date').textContent =
+    days[dow] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+ 
+  const day = SCHEDULE[dow];
+  const typeLbl = day.type === 'free' ? 'Free Day — Learning Time 🎉' : 'Uni Day';
+  document.getElementById('day-headline').textContent = typeLbl;
+  document.getElementById('stat-free').textContent = day.freeHours + 'h';
+ 
+  // Timeline
+  const tl = document.getElementById('timeline-content');
+  tl.innerHTML = '';
+  const items = [...(day.freeSlots || []), ...(day.classes || [])].sort((a,b) => {
+    const parse = t => {
+      const [time, period] = t.split(' ');
+      let [h, m] = time.split(':').map(Number);
+      if (period === 'PM' && h !== 12) h += 12;
+      if (period === 'AM' && h === 12) h = 0;
+      return h * 60 + (m || 0);
+    };
+    return parse(a.time) - parse(b.time);
+  });
+ 
+  items.forEach((item, i) => {
+    const isLast = i === items.length - 1;
+    tl.innerHTML += `
+      <div class="timeline-item">
+        <div class="tl-time">${item.time}</div>
+        <div class="tl-dot-wrap">
+          <div class="tl-dot ${item.color}"></div>
+          ${!isLast ? '<div class="tl-line"></div>' : ''}
+        </div>
+        <div class="tl-content">
+          <div class="tl-label">${item.label}</div>
+          <div class="tl-sub">${item.sub}</div>
+        </div>
+      </div>`;
+  });
+ 
+  // Suggestion
+  const sug = day.suggestion;
+  document.getElementById('suggestion-title').textContent = sug.title;
+  document.getElementById('suggestion-list').innerHTML = sug.items
+    .map(i => `<div class="suggestion-item"><span class="s-bullet">→</span><span>${i}</span></div>`)
+    .join('');
+ 
+  // Stat tasks
+  updateTaskCount();
+}
+ 
+// ── Tasks ──────────────────────────────────────────────────────────
+function renderTasks() {
+  ['uni', 'learn'].forEach(type => {
+    const el = document.getElementById(type + '-tasks');
+    el.innerHTML = tasks[type].map((t, i) => `
+      <div class="task-item" onclick="toggleTask('${type}', ${i})">
+        <div class="task-check ${t.done ? 'done' : ''}">
+          ${t.done ? '✓' : ''}
+        </div>
+        <div class="task-text ${t.done ? 'done' : ''}">${t.text}</div>
+        <span class="task-badge badge-${t.badge}">${t.badge}</span>
+      </div>`).join('');
+  });
+}
+ 
+function toggleTask(type, i) {
+  tasks[type][i].done = !tasks[type][i].done;
+  saveTasks();
+  renderTasks();
+  updateTaskCount();
+}
+
+function clearCompletedTasks() {
+  tasks.uni = tasks.uni.filter(task => !task.done);
+  tasks.learn = tasks.learn.filter(task => !task.done);
+  saveTasks();
+  renderTasks();
+  updateTaskCount();
+}
+
+function resetTasks() {
+  tasks = JSON.parse(JSON.stringify(defaultTasks));
+  saveTasks();
+  renderTasks();
+  updateTaskCount();
+}
+  
+function addTask(type) {
+  const input = document.getElementById(type + '-input');
+  const text = input.value.trim();
+  if (!text) return;
+  tasks[type].push({ text, done: false, badge: type === 'uni' ? 'uni' : 'learn' });
+  saveTasks();
+  input.value = '';
+  renderTasks();
+  updateTaskCount();
+}
+
+// ── Skills ─────────────────────────────────────────────────────────
+function renderSkills() {
+  const map = { c: 'bar-c', sql: 'bar-sql', ai: 'bar-ai', cap: 'bar-cap' };
+  const pmap = { c: 'pct-c', sql: 'pct-sql', ai: 'pct-ai', cap: 'pct-cap' };
+  Object.keys(map).forEach(k => {
+    document.getElementById(map[k]).style.width = skills[k] + '%';
+    document.getElementById(pmap[k]).textContent = skills[k] + '%';
+  });
+}
+ 
+function updateSkill(key) {
+  skills[key] = Math.min(100, skills[key] + 5);
+  saveSkills();
+  renderSkills();
+}
+ 
+// ── Highlight today in timetable ───────────────────────────────────
+function highlightToday() {
+  const dow = new Date().getDay();
+  const map = { 1: 'wd-mon', 2: 'wd-tue', 6: 'wd-sat' };
+  if (map[dow]) {
+    const el = document.getElementById(map[dow]);
+    if (el) { el.classList.add('today'); }
+  }
+}
+ 
+// ── Init ───────────────────────────────────────────────────────────
+loadToday();
+updateClock();
+renderSkills();
+highlightToday();
+setInterval(updateClock, 60000);
+</script>
+</body>
+</html>
+ 
